@@ -43,10 +43,10 @@ def eval(eval_env, agent, eval_episodes):
     return sum(returns) / eval_episodes
 
 
-path = "./collected_data/walker_run-td3-medium/data"
+path = "./collected_data/walker_walk-td3-medium/data"
 replay_buffer = ReplayBuffer(path)
 
-task_name = "walker_run"
+task_name = "walker_walk"
 seed = 42
 eval_env = dmc.make(task_name, seed=seed)
 
@@ -67,7 +67,7 @@ target_entropy = -6
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device(
     "cpu")
 beta = 5.0
-num_random = 5
+num_random = 20
 num_epochs = 100
 num_trains_per_epoch = 500
 
@@ -79,7 +79,7 @@ return_list = []
 for i in range(10):
     with tqdm(total=int(num_epochs / 10), desc='Iteration %d' % i) as pbar:
         for i_epoch in range(int(num_epochs / 10)):
-            return_list.append(eval(eval_env=eval_env, agent=agent, eval_episodes=1))
+            return_list.append(eval(eval_env=eval_env, agent=agent, eval_episodes=10))
 
             for _ in range(num_trains_per_epoch):
                 b_s, b_a, b_r, b_ns = replay_buffer.sample(batch_size)
