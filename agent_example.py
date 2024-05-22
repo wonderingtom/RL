@@ -14,8 +14,9 @@ class Agent:
     def load(self, load_path):
         pass
 
-class CQL:
-    pass
+
+
+# 
 def load_data(data_path):
     """
     An example function to load the episodes in the 'data_path'.
