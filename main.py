@@ -2,12 +2,12 @@ import torch
 import numpy as np
 from CQL_agent import CQL
 import random
-from rl_utils import ReplayBuffer
 from tqdm import tqdm
 import dmc
 import glob
 from dataloader import ReplayBuffer
-
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 random.seed(0)
 np.random.seed(0)
@@ -57,13 +57,13 @@ actor_lr = 3e-4
 critic_lr = 3e-3
 alpha_lr = 3e-4
 num_episodes = 100
-hidden_dim = 128
+hidden_dim = 256
 gamma = 0.99
 tau = 0.005  # 软更新参数
 buffer_size = 100000
 minimal_size = 1000
-batch_size = 64
-target_entropy = -6
+batch_size = 256
+target_entropy = 1
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device(
     "cpu")
 beta = 5.0
@@ -80,7 +80,7 @@ for i in range(10):
     with tqdm(total=int(num_epochs / 10), desc='Iteration %d' % i) as pbar:
         for i_epoch in range(int(num_epochs / 10)):
             return_list.append(eval(eval_env=eval_env, agent=agent, eval_episodes=10))
-
+            losses = []
             for _ in range(num_trains_per_epoch):
                 b_s, b_a, b_r, b_ns = replay_buffer.sample(batch_size)
                 transition_dict = {
@@ -90,7 +90,13 @@ for i in range(10):
                     'rewards': b_r,
                     'dones': np.zeros(len(b_s))
                 }
-                agent.update(transition_dict)
+                value_loss, actor_loss, alpha_loss = agent.update(transition_dict)
+                losses.append((value_loss, actor_loss, alpha_loss))
+            mean_loss = np.mean(losses, axis=0)
+            print('=' * 89)
+            print('Value loss {:.2f}, Actor loss {:.2f}, Alpha loss {:.2f}'
+                  .format(mean_loss[0], mean_loss[1], mean_loss[-1]))
+            print('=' * 89)
 
             if (i_epoch + 1) % 10 == 0:
                 pbar.set_postfix({
